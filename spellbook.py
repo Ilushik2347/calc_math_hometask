@@ -7,6 +7,15 @@ from scipy.misc import derivative
 
 # 0th Circle
 def euler_explicit(funcs, x_start, t_stop, h=0.1):
+    """
+    Явный метод Эйлера
+
+    :param funcs: функция, принимающая на вход вектор и возвращающая вектор. Функция должна принимать в качестве первого аргумента время.
+    :param x_start: начальный вектор системы. Первая координата - начальное время
+    :param t_stop: конечное время интегрирования
+    :param h: шаг h
+    :return: вектор состояния системы в конечный момент времени. Первая координата - конечное время
+    """
     x = x_start.copy()
     y = [x_start.copy()]
     while x[0] < t_stop:
@@ -17,6 +26,15 @@ def euler_explicit(funcs, x_start, t_stop, h=0.1):
 
 # 1th Circle
 def euler_implicit(funcs, x_start, t_stop, h=0.1):
+    """
+    Неявный метод Эйлера
+
+    :param funcs: функция, принимающая на вход вектор и возвращающая вектор. Функция должна принимать в качестве первого аргумента время.
+    :param x_start: начальный вектор системы. Первая координата - начальное время
+    :param t_stop: конечное время интегрирования
+    :param h: шаг h
+    :return: вектор состояния системы в конечный момент времени. Первая координата - конечное время
+    """
     x = x_start.copy()
     y = [x_start.copy()]
     while x[0] < t_stop:
@@ -29,6 +47,15 @@ def euler_implicit(funcs, x_start, t_stop, h=0.1):
 
 # 2th Circle
 def euler_central_point(funcs, x_start, t_stop, h=0.1):
+    """
+    Метод Эйлера с центрольной точкой
+
+    :param funcs: функция, принимающая на вход вектор и возвращающая вектор. Функция должна принимать в качестве первого аргумента время.
+    :param x_start: начальный вектор системы. Первая координата - начальное время
+    :param t_stop: конечное время интегрирования
+    :param h: шаг h
+    :return: вектор состояния системы в конечный момент времени. Первая координата - конечное время
+    """
     x = x_start.copy()
     y = [x_start.copy()]
     while x[0] < t_stop:
@@ -40,6 +67,15 @@ def euler_central_point(funcs, x_start, t_stop, h=0.1):
 
 # 3rd Circle
 def adams_2(funcs, x_start, t_stop, h=0.001):
+    """
+    Метод Адамса второго порядка
+
+    :param funcs: функция, принимающая на вход вектор и возвращающая вектор. Функция должна принимать в качестве первого аргумента время.
+    :param x_start: начальный вектор системы. Первая координата - начальное время
+    :param t_stop: конечное время интегрирования
+    :param h: шаг h
+    :return: вектор состояния системы в конечный момент времени. Первая координата - конечное время
+    """
     init_method = RungeExplicit(np.array([[0, 0, 0], [0.5, 0.5, 0.5], [0, 0, 1]]))
     y = list(init_method(funcs, x_start.copy(), x_start[0]+h, h).T)
     x = y[-1]
@@ -51,6 +87,15 @@ def adams_2(funcs, x_start, t_stop, h=0.001):
 
 
 def adams_3(funcs, x_start, t_stop, h=0.001):
+    """
+    Метод Адамса третьего порядка
+
+    :param funcs: функция, принимающая на вход вектор и возвращающая вектор. Функция должна принимать в качестве первого аргумента время.
+    :param x_start: начальный вектор системы. Первая координата - начальное время
+    :param t_stop: конечное время интегрирования
+    :param h: шаг h
+    :return: вектор состояния системы в конечный момент времени. Первая координата - конечное время
+    """
     init_method = RungeExplicit(np.array([[0, 0, 0, 0], [0.5, 0.5, 0, 0], [1, 0, 1, 0], [0, 1/6, 2/3, 1/6]]))
     y = list(init_method(funcs, x_start.copy(), x_start[0]+2*h, h).T)
     x = y[-1]
@@ -63,6 +108,15 @@ def adams_3(funcs, x_start, t_stop, h=0.001):
 
 # 4rd Circle
 def adams_4(funcs, x_start, t_stop, h=0.001):
+    """
+    Метод Адамса 4 порядка
+    
+    :param funcs: функция, принимающая на вход вектор и возвращающая вектор. Функция должна принимать в качестве первого аргумента время.
+    :param x_start: начальный вектор системы. Первая координата - начальное время
+    :param t_stop: конечное время интегрирования
+    :param h: шаг h
+    :return: вектор состояния системы в конечный момент времени. Первая координата - конечное время
+    """
     init_method = RungeExplicit(np.array([[0, 0, 0, 0, 0], [0.5, 0.5, 0, 0, 0], [0.5, 0, 0.5, 0, 0],
                                           [1, 0, 0, 1, 0], [0, 1/8, 3/8, 3/8, 1/8]]))
     y = list(init_method(funcs, x_start.copy(), x_start[0]+3*h, h).T)
@@ -79,13 +133,31 @@ def adams_4(funcs, x_start, t_stop, h=0.001):
 # To be inherited from Onestepmethod class
 
 class RungeExplicit:
+    
+    """
+    Класс с явными методами Рунге-Кутты
+    """
+    
     def __init__(self, butcher):
+        """
+        Создать явный метод РК с заданной таблицей Бутчера 
+        :param butcher: таблица Бутчера
+        """
         self.alphas = butcher[:-1, 0]
         self.order = len(self.alphas)
         self.gammas = butcher[-1, 1:]
         self.betas = butcher[:-1, 1:]
 
     def __call__(self, funcs, x_start, t_stop, h=0.1):
+        """
+        Проинтегрировать систему заданным методом РК
+
+        :param funcs: функция, принимающая на вход вектор и возвращающая вектор. Функция должна принимать в качестве первого аргумента время.
+        :param x_start: начальный вектор системы. Первая координата - начальное время
+        :param t_stop: конечное время интегрирования
+        :param h: шаг h
+        :return: вектор состояния системы в конечный момент времени. Первая координата - конечное время
+        """
         x = x_start.copy()
         y = [x_start.copy()]
         while x[0] < t_stop:
@@ -120,7 +192,22 @@ def jacobian(f, t_0, y_0):
 
 
 class Onestepmethod(object):
+
+    """
+    Общий класс для одношаговых методов
+    """
+
     def __init__(self, f, y0, t0, te, N, tol):
+        """
+        Создать одношаговый метод
+
+        :param f: ??
+        :param y0: начальный вектор системы
+        :param t0: начальное время интегрирования # TODO: Стас, зачем так менять API?
+        :param te: конечное время интегрирования
+        :param N: ??
+        :param tol: ??
+        """
         self.f = f
         self.y0 = y0.astype(float)
         self.t0 = t0
@@ -134,6 +221,11 @@ class Onestepmethod(object):
         self.solution = None
 
     def step(self):
+        """
+        Провести одну итерацию интегрирования
+
+        :return: вектор следующего состояния
+        """
         ti, yi = self.grid[0], self.y0
         tim1 = ti
         yield np.hstack((array([ti]), yi))
@@ -143,16 +235,39 @@ class Onestepmethod(object):
             yield np.hstack((array([ti]), yi))
 
     def solve(self):
+        """
+        Провести все шаги интегрирования до конечного момента времени
+        :return: Список из промежуточных векторов состояния системы
+        """
         self.solution = list(self.step())
 
     # To be implemented in a derived class
     def phi(self, tim1, yi):
+        """
+        # TODO: а что это?
+
+        :param tim1: ??
+        :param yi: ??
+        :return: ??
+        """
         return 1
 
 
 # 7th Circle
 class RungeImplicit(Onestepmethod):
+
+    """
+    Класс для неявных методов РК
+    """
+
     def phi(self, t0, y0):
+        """
+        # TODO: что это?
+
+        :param t0: начальное время
+        :param y0: начальный вектор состояния
+        :return:
+        """
         M = 10
         stageDer = array(self.s*[self.f(t0,y0)])
         J = jacobian(self.f, t0, y0)
@@ -172,10 +287,27 @@ class RungeImplicit(Onestepmethod):
         return initVal
 
     def phi_newtonstep(self, t0, y0, initVal, luFactor):
+        """
+        Еще одна магия
+
+        :param t0:
+        :param y0:
+        :param initVal:
+        :param luFactor:
+        :return:
+        """
         d = linalg.lu_solve(luFactor, - self.F(initVal.flatten(), t0, y0))
         return initVal.flatten() + d, norm(d)
 
     def F(self, stageDer, t0, y0):
+        """
+        ??
+
+        :param stageDer:
+        :param t0:
+        :param y0:
+        :return:
+        """
         stageDer_new = empty((self.s, self.m))
         for i in range(self.s):
             stageVal = y0 + array([self.h * dot(self.A[i, :],
@@ -185,6 +317,11 @@ class RungeImplicit(Onestepmethod):
 
 
 class Gauss(RungeImplicit):
+
+    """
+    Класс с методом Гаусса (частный случай неявного РК)
+    """
+
     A = array([[5/36, 2/9 - sqrt(15)/15, 5/36 - sqrt(15)/30],
              [5/36 + sqrt(15)/24, 2/9, 5/36 - sqrt(15)/24],
              [5/36 + sqrt(15)/30, 2/9 + sqrt(15)/15, 5/36]])
@@ -198,6 +335,9 @@ class Gauss(RungeImplicit):
 
 
 if __name__ == '__main__':
+    """
+    Здесь идет тестирование методов на наличие серьезных косяков. Но, бог свидетель, как же это тяжело читать!
+    """
     t0, te = 0, 10
     tol_newton = 1e-9
     tol_sol = 1e-5
@@ -223,6 +363,7 @@ if __name__ == '__main__':
     mean_error = []
     result = []
     expected = []
+    # TODO: возможно, стоит сделать тесты автоматизироваными?
     for n in N:
         stepsize.append((te - t0) / (n + 1))
         timeGrid = linspace(t0, te, n + 2)
