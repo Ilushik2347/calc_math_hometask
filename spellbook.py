@@ -2,8 +2,10 @@ from scipy import linalg, linspace, array, dot, eye, empty, sqrt, exp, sin, cos
 from scipy.linalg import norm
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.misc import derivative
 
 
+# 0th Circle
 def euler_explicit(funcs, x_start, t_stop, h=0.1):
     x = x_start.copy()
     y = [x_start.copy()]
@@ -13,6 +15,7 @@ def euler_explicit(funcs, x_start, t_stop, h=0.1):
     return np.array(y).T
 
 
+# 1th Circle
 def euler_implicit(funcs, x_start, t_stop, h=0.1):
     x = x_start.copy()
     y = [x_start.copy()]
@@ -24,6 +27,7 @@ def euler_implicit(funcs, x_start, t_stop, h=0.1):
     return np.array(y).T
 
 
+# 2th Circle
 def euler_central_point(funcs, x_start, t_stop, h=0.1):
     x = x_start.copy()
     y = [x_start.copy()]
@@ -34,8 +38,9 @@ def euler_central_point(funcs, x_start, t_stop, h=0.1):
     return np.array(y).T
 
 
+# 3rd Circle
 def adams_2(funcs, x_start, t_stop, h=0.001):
-    init_method = RungeExplicit(np.array([[0,0,0],[0.5,0.5,0.5],[0,0,1]]))
+    init_method = RungeExplicit(np.array([[0, 0, 0], [0.5, 0.5, 0.5], [0, 0, 1]]))
     y = list(init_method(funcs, x_start.copy(), x_start[0]+h, h).T)
     x = y[-1]
     y = y[:-1]
@@ -46,7 +51,7 @@ def adams_2(funcs, x_start, t_stop, h=0.001):
 
 
 def adams_3(funcs, x_start, t_stop, h=0.001):
-    init_method = RungeExplicit(np.array([[0,0,0,0], [0.5, 0.5, 0, 0], [1, 0, 1, 0], [0, 1/6, 2/3, 1/6]]))
+    init_method = RungeExplicit(np.array([[0, 0, 0, 0], [0.5, 0.5, 0, 0], [1, 0, 1, 0], [0, 1/6, 2/3, 1/6]]))
     y = list(init_method(funcs, x_start.copy(), x_start[0]+2*h, h).T)
     x = y[-1]
     y = y[:-1]
@@ -56,8 +61,10 @@ def adams_3(funcs, x_start, t_stop, h=0.001):
     return np.array(y).T
 
 
+# 4rd Circle
 def adams_4(funcs, x_start, t_stop, h=0.001):
-    init_method = RungeExplicit(np.array([[0,0,0,0,0],[0.5,0.5,0,0,0],[0.5,0,0.5,0,0],[1,0,0,1,0],[0,1/8,3/8,3/8,1/8]]))
+    init_method = RungeExplicit(np.array([[0, 0, 0, 0, 0], [0.5, 0.5, 0, 0, 0], [0.5, 0, 0.5, 0, 0],
+                                          [1, 0, 0, 1, 0], [0, 1/8, 3/8, 3/8, 1/8]]))
     y = list(init_method(funcs, x_start.copy(), x_start[0]+3*h, h).T)
     x = y[-1]
     y = y[:-1]
@@ -67,6 +74,7 @@ def adams_4(funcs, x_start, t_stop, h=0.001):
     return np.array(y).T
 
 
+# 5th Circle
 # TODO
 # To be inherited from Onestepmethod class
 
@@ -95,13 +103,23 @@ class RungeExplicit:
         return np.array(y).T
 
 
-# TODO
-# Jacobian should be computed automagically for an arbitrary function
+# 6th Circle
 def jacobian(f, t_0, y_0):
-    return [[]]
+    jac = np.zeros((len(y_0), len(y_0)))
+    for i in range(len(y_0)):
+        def g(x):
+            y = y_0.copy()
+            y[i] = x
+            return f(t_0, y)
+        for j in range(len(y_0)):
+            def h(x):
+                return g(x)[j]
+            jac[j][i] = derivative(h, y_0[i])
+
+    return jac
 
 
-class Onestepmethod (object):
+class Onestepmethod(object):
     def __init__(self, f, y0, t0, te, N, tol):
         self.f = f
         self.y0 = y0.astype(float)
@@ -132,6 +150,7 @@ class Onestepmethod (object):
         return 1
 
 
+# 7th Circle
 class RungeImplicit(Onestepmethod):
     def phi(self, t0, y0):
         M = 10
@@ -173,10 +192,12 @@ class Gauss(RungeImplicit):
     c = [1/2-sqrt(15)/10, 1/2, 1/2+sqrt(15)/10]
 
 
+# TODO
+# 8th Circle
+# 9th Circle
+
+
 if __name__ == '__main__':
-    def jacobian(f, t_0, y_0):
-        return [[0, -1],
-                [1, -1]]
     t0, te = 0, 10
     tol_newton = 1e-9
     tol_sol = 1e-5
@@ -184,6 +205,18 @@ if __name__ == '__main__':
     def f(t, y):
         return array([-y[1],
                       y[0]-y[1]])
+
+    init = array([0, sqrt(3)/2])
+
+    # solution
+    # array([t, -exp(-t/2)*sin(t*sqrt(3)/2), exp(-t/2)*((-1/2)*sin(t*sqrt(3)/2)+(sqrt(3)/2)*cos(t*sqrt(3)/2))])
+
+    # def f(t, y):
+    #     return array([[(1-2*t)*y[0]]])
+
+    # init = array([1.])
+    # solution
+    # array([t, exp(t-t**2)])
 
     N = [2 * n for n in range(100)]
     stepsize = []
@@ -195,7 +228,7 @@ if __name__ == '__main__':
         timeGrid = linspace(t0, te, n + 2)
         expected = [array([t, -exp(-t/2)*sin(t*sqrt(3)/2),
                            exp(-t/2)*((-1/2)*sin(t*sqrt(3)/2)+(sqrt(3)/2)*cos(t*sqrt(3)/2))]) for t in timeGrid]
-        method = Gauss(f, array([0, sqrt(3)/2]), t0, te, n, tol_newton)
+        method = Gauss(f, init, t0, te, n, tol_newton)
         method.solve()
         result = method.solution
         print(result)
