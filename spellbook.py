@@ -3,6 +3,7 @@ from scipy.linalg import norm
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.misc import derivative
+from tqdm import tqdm
 
 
 # 0th Circle
@@ -229,7 +230,7 @@ class Onestepmethod(object):
         ti, yi = self.grid[0], self.y0
         tim1 = ti
         yield np.hstack((array([ti]), yi))
-        for ti in self.grid[1:]:
+        for ti in tqdm(self.grid[1:]):
             yi = yi + self.h * self.phi(tim1, yi)
             tim1 = ti
             yield np.hstack((array([ti]), yi))
