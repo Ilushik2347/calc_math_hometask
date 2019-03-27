@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.misc import derivative
 from tqdm import tqdm
+import abc
+from colorama import Fore
 
 
 # 0th Circle
@@ -198,68 +200,77 @@ class Onestepmethod(object):
     Общий класс для одношаговых методов
     """
 
-    def __init__(self, f, y0, t0, te, N, tol):
+    def __init__(self, f: callable, y0: array, t0: float, te: float, n: int):
+
         """
         Создать одношаговый метод
 
-        :param f: ??
+        :param f: система уравнений
         :param y0: начальный вектор системы
-        :param t0: начальное время интегрирования # TODO: Стас, зачем так менять API?
+        :param t0: начальное время интегрирования
         :param te: конечное время интегрирования
-        :param N: ??
-        :param tol: ??
+        :param N: число шагов
         """
+
         self.f = f
         self.y0 = y0.astype(float)
         self.t0 = t0
         self.interval = [t0, te]
-        self.grid = linspace(t0, te, N+2)
-        self.h = (te-t0)/(N+1)
-        self.N = N
-        self.tol = tol
+        self.grid = linspace(t0, te, n+2)
+        self.h = (te-t0)/(n+1)
+        self.N = n
         self.m = len(y0)
-        self.s = len(self.b)
         self.solution = None
 
     def step(self):
+
         """
         Провести одну итерацию интегрирования
 
         :return: вектор следующего состояния
+
         """
         ti, yi = self.grid[0], self.y0
         tim1 = ti
         yield np.hstack((array([ti]), yi))
-        for ti in tqdm(self.grid[1:]):
+        for ti in tqdm(self.grid[1:], bar_format="{l_bar}%s{bar}%s{r_bar}" % (Fore.GREEN, Fore.RESET)):
             yi = yi + self.h * self.phi(tim1, yi)
             tim1 = ti
             yield np.hstack((array([ti]), yi))
 
     def solve(self):
+
         """
         Провести все шаги интегрирования до конечного момента времени
         :return: Список из промежуточных векторов состояния системы
         """
+
         self.solution = list(self.step())
 
-    # To be implemented in a derived class
-    def phi(self, tim1, yi):
+    @abc.abstractmethod
+    def phi(self, tim1, yi) -> array:
         """
         # TODO: а что это?
-
         :param tim1: ??
         :param yi: ??
         :return: ??
         """
-        return 1
+        return array([])
 
 
 # 7th Circle
 class RungeImplicit(Onestepmethod):
-
     """
     Класс для неявных методов РК
     """
+
+    def __init__(self, A, b, c, *args, tol=1e-9):
+        super(RungeImplicit, self).__init__(*args)
+        self.A = A
+        self.b = b
+        self.c = c
+        self.s = len(self.b)
+        self.tol = tol
 
     def phi(self, t0, y0):
         """
@@ -270,10 +281,10 @@ class RungeImplicit(Onestepmethod):
         :return:
         """
         M = 10
-        stageDer = array(self.s*[self.f(t0,y0)])
+        stageDer = array(self.s*[self.f(t0, y0)])
         J = jacobian(self.f, t0, y0)
         stageVal = self.phi_solve(t0, y0, stageDer, J, M)
-        return array([dot(self.b, stageVal.reshape(self.s,self.m)[:, j]) for j in range(self.m)])
+        return array([dot(self.b, stageVal.reshape(self.s, self.m)[:, j]) for j in range(self.m)])
 
     def phi_solve(self, t0, y0, initVal, J, M):
         JJ = eye(self.s*self.m)-self.h*np.kron(self.A, J)
@@ -323,11 +334,28 @@ class Gauss(RungeImplicit):
     Класс с методом Гаусса (частный случай неявного РК)
     """
 
-    A = array([[5/36, 2/9 - sqrt(15)/15, 5/36 - sqrt(15)/30],
-             [5/36 + sqrt(15)/24, 2/9, 5/36 - sqrt(15)/24],
-             [5/36 + sqrt(15)/30, 2/9 + sqrt(15)/15, 5/36]])
-    b = [5/18, 4/9, 5/18]
-    c = [1/2-sqrt(15)/10, 1/2, 1/2+sqrt(15)/10]
+    def __init__(self, *args):
+        A = array([[5/36, 2/9 - sqrt(15)/15, 5/36 - sqrt(15)/30],
+                 [5/36 + sqrt(15)/24, 2/9, 5/36 - sqrt(15)/24],
+                 [5/36 + sqrt(15)/30, 2/9 + sqrt(15)/15, 5/36]])
+        b = [5/18, 4/9, 5/18]
+        c = [1/2-sqrt(15)/10, 1/2, 1/2+sqrt(15)/10]
+        super(Gauss, self).__init__(A, b, c, *args)
+
+
+class CROS(Onestepmethod):
+
+    """
+    Класс с методом Розенброка с комплексными коэффициентами
+    """
+
+    def phi(self, tim1, yi):
+        jac = jacobian(self.f, tim1, yi)
+        a = eye(self.m, self.m) - 0.5*(1+1j)*self.h*jac
+        b = self.f(tim1+0.5*self.h, yi)
+        lu = linalg.lu_factor(a)
+        w = linalg.lu_solve(lu, b)
+        return w.real
 
 
 # TODO
@@ -340,7 +368,6 @@ if __name__ == '__main__':
     Здесь идет тестирование методов на наличие серьезных косяков. Но, бог свидетель, как же это тяжело читать!
     """
     t0, te = 0, 10
-    tol_newton = 1e-9
     tol_sol = 1e-5
 
     def f(t, y):
@@ -370,7 +397,7 @@ if __name__ == '__main__':
         timeGrid = linspace(t0, te, n + 2)
         expected = [array([t, -exp(-t/2)*sin(t*sqrt(3)/2),
                            exp(-t/2)*((-1/2)*sin(t*sqrt(3)/2)+(sqrt(3)/2)*cos(t*sqrt(3)/2))]) for t in timeGrid]
-        method = Gauss(f, init, t0, te, n, tol_newton)
+        method = CROS(f, init, t0, te, n)
         method.solve()
         result = method.solution
         print(result)
