@@ -397,7 +397,7 @@ if __name__ == '__main__':
         timeGrid = linspace(t0, te, n + 2)
         expected = [array([t, -exp(-t/2)*sin(t*sqrt(3)/2),
                            exp(-t/2)*((-1/2)*sin(t*sqrt(3)/2)+(sqrt(3)/2)*cos(t*sqrt(3)/2))]) for t in timeGrid]
-        method = CROS(f, init, t0, te, n)
+        method = Gauss(f, init, t0, te, n)
         method.solve()
         result = method.solution
         print(result)
