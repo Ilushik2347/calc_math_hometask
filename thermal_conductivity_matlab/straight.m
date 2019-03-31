@@ -17,7 +17,11 @@ tau = t(2)-t(1);
 solution_true = zeros(siz(1), x_steps-2);
 
 for i = 1:siz(1)
-    solution_true(i, :) = exact(t(i), x);
+    u_true = zeros(1, x_steps-2)';
+    for j = 1:x_steps-2
+        u_true(j) = exact(t(i), x(j));
+    end
+    solution_true(i, :) = u_true;
 end
 
 error =  sqrt(sum((solution-solution_true).^2, 2));
